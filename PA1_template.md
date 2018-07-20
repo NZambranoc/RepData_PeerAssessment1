@@ -11,7 +11,8 @@ editor_options:
 
 ## **1. Loading and preprocessing the data**
 
-```{r loaddependencies, warning=F, message= F}
+
+```r
 library(tidyverse) 
 library(lubridate)
 library(knitr)
@@ -24,7 +25,8 @@ opts_chunk$set(echo = TRUE)
 
 * Download and unzip Data from web 
 
-```{r getpreprodata, warning=F, message= F}
+
+```r
 data_url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 down.file <- "./Data/AMD.zip"
 data <- "./data/activity.csv"
@@ -43,14 +45,14 @@ if (!file.exists(down.file)) { # If data has been already downloadead will use e
 ### Load Raw Data to Memory ###
 rawdata <- read_csv(data)
 data <- na.exclude(rawdata) # remove na.values
-
 ```
 
 ## **2. What is mean total number of steps taken per day?**
 
 * Produce Histogram with the freq. dist. of total Steps by Day
 
-```{r histogram}
+
+```r
 stepsbydate <- group_by(data,date) %>% summarise(total.steps=sum(steps))
 
 with(stepsbydate, total.steps %>% qplot(binwidth=3000, 
@@ -59,25 +61,31 @@ with(stepsbydate, total.steps %>% qplot(binwidth=3000,
                                         main = "total number of steps taken each day"
                                         )
      )
-
 ```
-```{r,results='asis',echo=F}
-stepsbydate <- stepsbydate %>% summarise(" "="Steps per day",
-                                mean=comma(mean(total.steps)),
-                                median=comma(median(total.steps))) 
-stepsbydate %>% kable %>%   
-                kable_styling(bootstrap_options = "striped", 
-                              full_width = F,
-                              position = "center")
 
-
-```
+![](PA1_template_files/figure-html/histogram-1.png)<!-- -->
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:left;"> mean </th>
+   <th style="text-align:left;"> median </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Steps per day </td>
+   <td style="text-align:left;"> 10,766.19 </td>
+   <td style="text-align:left;"> 10,765 </td>
+  </tr>
+</tbody>
+</table>
 
 
 ## **3. What is the average daily activity pattern?**
 
-```{r dailypattern}
 
+```r
 avgstepsinterval <- group_by(data,interval) %>% summarise(avg.steps=mean(steps))
 
 ggplot(avgstepsinterval,aes(x=interval,y=avg.steps)) +
@@ -90,7 +98,10 @@ ggplot(avgstepsinterval,aes(x=interval,y=avg.steps)) +
                        labels = seq(0,2355,200) %>% sprintf(fmt = "%04d") %>% strptime(format = "%H%M") %>% format(format="%H:%M"))
 ```
 
-```{r maxinteral,results='asis'}
+![](PA1_template_files/figure-html/dailypattern-1.png)<!-- -->
+
+
+```r
 maxsteps <- avgstepsinterval[which.max(avgstepsinterval$avg.steps),]
 
 kable(maxsteps) %>% 
@@ -98,21 +109,32 @@ kable(maxsteps) %>%
                   full_width = F,
                   position = "left")
 ```
-```{r maxsteps, echo=F}
-maxsteps <- sprintf(fmt="%04d",as.numeric(maxsteps[1]))
 
-```
-    The interval with the highest average number of steps across all days is `r maxsteps`.
+<table class="table table-striped" style="width: auto !important; ">
+ <thead>
+  <tr>
+   <th style="text-align:right;"> interval </th>
+   <th style="text-align:right;"> avg.steps </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;"> 835 </td>
+   <td style="text-align:right;"> 206.1698 </td>
+  </tr>
+</tbody>
+</table>
+
+    The interval with the highest average number of steps across all days is 0835.
 
 ## **4. Imputing missing values**
     
-```{r,echo=F}
-nacount <- nrow(rawdata) - nrow(data) 
-```
-**Total number of rows containing missing values:** `r comma(nacount)`
+
+**Total number of rows containing missing values:** 2,304
 
 * fill in NA values with interval's mean.
-```{r replaceNAs}
+
+```r
 data2 <- rawdata %>% 
          group_by(date) %>%
          mutate(steps=if_else(condition = is.na(steps),
@@ -121,7 +143,8 @@ data2 <- rawdata %>%
 ```
 
 
-```{r dailypattern2}
+
+```r
 stepsbydate2 <- data2 %>% group_by(date) %>% 
                 summarise(total.steps=sum(steps))  
 stepsbydate2 %>% .$total.steps %>% 
@@ -130,31 +153,38 @@ stepsbydate2 %>% .$total.steps %>%
                       ylab = "Freq",
                       main = "total number of steps taken each day"
                       )
-
 ```
 
-```{r,results='asis',echo=F}
-stepsbydate2 <- stepsbydate2 %>% summarise(" "="Steps per day",
-                                mean=comma(mean(total.steps)),
-                                median=comma(median(total.steps)))
-stepsbydate2 %>% kable %>%
-                 kable_styling(bootstrap_options = "striped",
-                               full_width = F,
-                               position = "center")
+![](PA1_template_files/figure-html/dailypattern2-1.png)<!-- -->
 
-
-```
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:left;"> mean </th>
+   <th style="text-align:left;"> median </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Steps per day </td>
+   <td style="text-align:left;"> 10,766.19 </td>
+   <td style="text-align:left;"> 10,766.19 </td>
+  </tr>
+</tbody>
+</table>
 **Estimate Comparison**
 
 Estimate|Mean Steps|Median Steps
 ---|---|---
-Removing NA Values|`r stepsbydate[2]`|`r stepsbydate[3]`
-Filling in NA Values(w/mean)|`r stepsbydate2[2]`|`r stepsbydate2[3]`
+Removing NA Values|10,766.19|10,765
+Filling in NA Values(w/mean)|10,766.19|10,766.19
 
 ## **5. Are there differences in activity patterns between weekdays and weekends?**
 
 Create a new factor variable in the dataset with two levels - “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
-```{r weekdayorweekend}
+
+```r
 data2 <- data2 %>% mutate(wk= ordered(weekdays(date),
                             levels= c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"),
                             labels=c(rep("Weekday",5),rep("Weekend",2))
@@ -163,8 +193,8 @@ data2 <- data2 %>% mutate(wk= ordered(weekdays(date),
                              )
                 ) 
 ```
-```{r weekpartern }
 
+```r
 avgstepsinterval2 <- group_by(data2,interval,wk) %>% summarise(avg.steps=mean(steps))
 
 xyplot(avg.steps~interval|wk,
@@ -174,7 +204,8 @@ xyplot(avg.steps~interval|wk,
        xlab = "Interval",
        ylab = "Avg. Number of Steps",
        main= "Average Number of Steps by day type")
-                             
 ```
+
+![](PA1_template_files/figure-html/weekpartern-1.png)<!-- -->
 
 
